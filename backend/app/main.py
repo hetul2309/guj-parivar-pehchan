@@ -1,5 +1,14 @@
-import importlib
+import sys
 import os
+from pathlib import Path
+
+# Ensure project root is in sys.path
+_current_dir = Path(__file__).resolve().parent
+_project_root = str(_current_dir.parent.parent)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+import importlib
 import pkgutil
 from typing import Optional, List
 from fastapi import FastAPI, Depends, HTTPException, status
