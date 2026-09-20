@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
+import { showToast } from '../../helpers/showToast';
 
 interface SpeechButtonProps {
   textToRead: string;
@@ -19,7 +20,7 @@ export const SpeechButton: React.FC<SpeechButtonProps> = ({
   const speak = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!('speechSynthesis' in window)) {
-      alert('Speech synthesis not supported in this browser.');
+      showToast('warning', 'Speech synthesis not supported in this browser.');
       return;
     }
 

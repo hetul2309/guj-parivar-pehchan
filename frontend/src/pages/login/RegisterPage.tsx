@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, Lock, User, MapPin, Eye, EyeOff, CheckCircle2, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 import { fetchApi } from '../../api/client';
+import { showToast } from '../../helpers/showToast';
 
 const GUJARAT_DISTRICTS = [
   'DAHOD', 'AHMEDABAD', 'SURAT', 'VADODARA', 'RAJKOT', 'GANDHINAGAR',
@@ -66,6 +67,8 @@ export const RegisterPage: React.FC = () => {
       localStorage.setItem('gujid_display_name', res.user.display_name);
       localStorage.setItem('gujid_district', res.user.district_code || districtCode);
 
+      showToast('success', i18n.language === 'en' ? `Account registered successfully! Welcome, ${res.user.display_name}.` : `ખાતું સફળતાપૂર્વક બની ગયું! સ્વાગત છે, ${res.user.display_name}.`);
+
       if (res.user.role === 'citizen') {
         localStorage.setItem('gujid_family_id', 'GJ-38915001');
         navigate('/citizen');
@@ -75,7 +78,9 @@ export const RegisterPage: React.FC = () => {
         navigate('/officer/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || (i18n.language === 'en' ? 'Registration failed.' : 'નોંધણી નિષ્ફળ ગઈ.'));
+      const errMsg = err.message || (i18n.language === 'en' ? 'Registration failed.' : 'નોંધણી નિષ્ફળ ગઈ.');
+      setError(errMsg);
+      showToast('error', errMsg);
     } finally {
       setLoading(false);
     }

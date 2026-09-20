@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, Check, X, RefreshCw } from 'lucide-react';
 import { listNameReviews, decideNameReview, NameReviewItem } from '../../api/identity';
+import { showToast } from '../../helpers/showToast';
 
 export const IdentityReviewPage: React.FC = () => {
   const [reviews, setReviews] = useState<NameReviewItem[]>([]);
@@ -25,10 +26,10 @@ export const IdentityReviewPage: React.FC = () => {
   const handleDecision = async (reviewId: string, decision: 'accept' | 'reject') => {
     try {
       await decideNameReview(reviewId, decision);
-      alert(`નિર્ણય નોંધાયો: ${decision === 'accept' ? 'મંજૂર' : 'નામંજૂર'}`);
+      showToast('success', `નિર્ણય નોંધાયો: ${decision === 'accept' ? 'મંજૂર' : 'નામંજૂર'}`);
       loadReviews();
     } catch (e: any) {
-      alert(e.message);
+      showToast('error', e.message);
     }
   };
 

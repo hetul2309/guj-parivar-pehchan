@@ -9,6 +9,8 @@ import { IdentityReviewPage } from './pages/officer/IdentityReviewPage';
 import { OfficerGrievancePage } from './pages/officer/OfficerGrievancePage';
 import { SmsOutboxPage } from './pages/debug/SmsOutboxPage';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Member B Integrated Pages
 import OfficerDashboardPage from './pages/officer/DashboardPage';
@@ -63,6 +65,7 @@ export const App: React.FC = () => {
   return (
     <Router>
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 antialiased selection:bg-teal-600 selection:text-white">
+        <ToastContainer />
         <Header />
 
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">

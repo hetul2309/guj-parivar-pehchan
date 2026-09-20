@@ -5,6 +5,7 @@ import {
   Plus, Edit2, Trash2, Loader2, CheckCircle, XCircle,
   Sparkles, Code2, AlertTriangle, Save, X
 } from 'lucide-react';
+import { showToast } from '../../helpers/showToast';
 
 const BLANK_SCHEME: Partial<SchemeCreate> = {
   name_en: '', name_gu: '', dept: '', benefit_type: '', amount_max: 0,
@@ -157,12 +158,6 @@ export default function AdminSchemesPage() {
   const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<Partial<SchemeCreate> | null | 'new'>(null);
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
-  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const fetchSchemes = async () => {
     setLoading(true);
@@ -178,10 +173,10 @@ export default function AdminSchemesPage() {
     try {
       if ((data as any).scheme_id) {
         await schemesApi.update((data as any).scheme_id, data);
-        showToast('Scheme updated / યોજના અપડેટ');
+        showToast('Scheme updated / યોજના અપડેટ', 'success');
       } else {
         await schemesApi.create(data);
-        showToast('Scheme created / યોજના બનાવી');
+        showToast('Scheme created / યોજના બનાવી', 'success');
       }
       setModal(null);
       fetchSchemes();
@@ -194,7 +189,7 @@ export default function AdminSchemesPage() {
     if (!confirm('Delete this scheme? / આ યોજના કાઢી નાખો?')) return;
     try {
       await schemesApi.delete(schemeId);
-      showToast('Scheme deleted');
+      showToast('Scheme deleted', 'success');
       fetchSchemes();
     } catch (e: any) {
       showToast(e.message || 'Failed', 'error');
@@ -203,12 +198,6 @@ export default function AdminSchemesPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-xl text-white text-sm font-medium ${
-          toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`}>{toast.msg}</div>
-      )}
 
       {/* Modal */}
       {modal !== null && (

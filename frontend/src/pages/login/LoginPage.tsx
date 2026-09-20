@@ -6,6 +6,7 @@ import {
   Sparkles, KeyRound, CheckCircle2, UserCheck, AlertCircle, Copy, Check
 } from 'lucide-react';
 import { fetchApi } from '../../api/client';
+import { showToast } from '../../helpers/showToast';
 
 interface Persona {
   id: string;
@@ -130,6 +131,8 @@ export const LoginPage: React.FC = () => {
       localStorage.setItem('gujid_display_name', res.user.display_name);
       localStorage.setItem('gujid_district', res.user.district_code || 'DAHOD');
 
+      showToast('success', i18n.language === 'en' ? `Welcome back, ${res.user.display_name}!` : `સ્વાગત છે, ${res.user.display_name}!`);
+
       if (res.user.role === 'citizen') {
         localStorage.setItem('gujid_family_id', 'GJ-38915001');
         navigate('/citizen');
@@ -141,7 +144,9 @@ export const LoginPage: React.FC = () => {
         navigate('/officer/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || (i18n.language === 'en' ? 'Incorrect username or password.' : 'અમાન્ય યુઝરનેમ અથવા પાસવર્ડ.'));
+      const errMsg = err.message || (i18n.language === 'en' ? 'Incorrect username or password.' : 'અમાન્ય યુઝરનેમ અથવા પાસવર્ડ.');
+      setError(errMsg);
+      showToast('error', errMsg);
     } finally {
       setLoading(false);
     }
@@ -150,7 +155,9 @@ export const LoginPage: React.FC = () => {
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password) {
-      setError(i18n.language === 'en' ? 'Please enter both Username and Password.' : 'કૃપા કરીને યુઝરનેમ અને પાસવર્ડ દાખલ કરો.');
+      const msg = i18n.language === 'en' ? 'Please enter both Username and Password.' : 'કૃપા કરીને યુઝરનેમ અને પાસવર્ડ દાખલ કરો.';
+      setError(msg);
+      showToast('warning', msg);
       return;
     }
     executeLogin(username, password);

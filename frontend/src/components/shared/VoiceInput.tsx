@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mic, MicOff } from 'lucide-react';
+import { showToast } from '../../helpers/showToast';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -17,7 +18,7 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   const toggleListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      showToast('warning', 'Speech recognition is not supported in this browser. Please use Chrome or Edge.');
       return;
     }
 

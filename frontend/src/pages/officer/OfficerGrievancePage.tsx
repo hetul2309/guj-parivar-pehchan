@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Clock, RefreshCw } from 'lucide-react';
 import { listOfficerGrievances, updateGrievanceStatus, GrievanceItem } from '../../api/grievance';
+import { showToast } from '../../helpers/showToast';
 
 export const OfficerGrievancePage: React.FC = () => {
   const [grievances, setGrievances] = useState<GrievanceItem[]>([]);
@@ -25,10 +26,10 @@ export const OfficerGrievancePage: React.FC = () => {
   const handleUpdate = async (grvId: string, status: string) => {
     try {
       await updateGrievanceStatus(grvId, status, `Updated by Dahod District Officer`);
-      alert(`ફરિયાદ ${grvId} ની સ્થિતિ અપડેટ થઈ: ${status}`);
+      showToast('success', `ફરિયાદ ${grvId} ની સ્થિતિ અપડેટ થઈ: ${status}`);
       loadGrievances();
     } catch (e: any) {
-      alert(e.message);
+      showToast('error', e.message);
     }
   };
 

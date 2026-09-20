@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { processAadhaarQR, getSampleQR, verifyAadhaarOTP, verifyBiometric } from '../../api/identity';
 import { syncOfflineBatch, verifyFamilyQRToken } from '../../api/enrollment';
+import { showToast } from '../../helpers/showToast';
 
 export const OperatorKiosk: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -95,7 +96,7 @@ export const OperatorKiosk: React.FC = () => {
         );
       }
     } catch (e: any) {
-      alert(`QR Error: ${e.message}`);
+      showToast('error', `QR Error: ${e.message}`);
     }
   };
 
@@ -116,8 +117,9 @@ export const OperatorKiosk: React.FC = () => {
         address: res.person_prefill.address
       });
       setStatusMessage(i18n.language === 'en' ? '✅ OTP Verified Successfully!' : '✅ OTP ચકાસણી સફળ!');
+      showToast('success', i18n.language === 'en' ? 'OTP Verified Successfully!' : 'OTP ચકાસણી સફળ!');
     } catch (e: any) {
-      alert(e.message);
+      showToast('error', e.message);
     }
   };
 
@@ -176,22 +178,24 @@ export const OperatorKiosk: React.FC = () => {
       currentQ.push(syncItem);
       await set('offline_enrollment_queue', currentQ);
       setOfflineQueue(currentQ);
-      alert(
+      showToast(
+        'warning',
         i18n.language === 'en'
-          ? '⚠️ Offline mode active! Enrollment saved in offline draft queue. Will sync once online.'
-          : '⚠️ ઈન્ટરનેટ બંધ છે! નોંધણી ઓફલાઇન ડ્રાફ્ટમાં સાચવી લેવાઈ છે. ઓનલાઇન થતાં જ સિંક થશે.'
+          ? 'Offline mode active! Enrollment saved in offline draft queue. Will sync once online.'
+          : 'ઈન્ટરનેટ બંધ છે! નોંધણી ઓફલાઇન ડ્રાફ્ટમાં સાચવી લેવાઈ છે. ઓનલાઇન થતાં જ સિંક થશે.'
       );
     } else {
       setSyncing(true);
       try {
         const res = await syncOfflineBatch([syncItem]);
-        alert(
+        showToast(
+          'success',
           i18n.language === 'en'
-            ? `✅ Enrollment successful! New Family ID: ${res.results[0]?.family_id}. SMS notification sent.`
-            : `✅ નોંધણી સફળ! નવો ફેમિલી આઈડી: ${res.results[0]?.family_id}. નાગરિકને SMS મોકલાયો છે.`
+            ? `Enrollment successful! New Family ID: ${res.results[0]?.family_id}. SMS notification sent.`
+            : `નોંધણી સફળ! નવો ફેમિલી આઈડી: ${res.results[0]?.family_id}. નાગરિકને SMS મોકલાયો છે.`
         );
       } catch (e: any) {
-        alert(`Sync error: ${e.message}`);
+        showToast('error', `Sync error: ${e.message}`);
       } finally {
         setSyncing(false);
       }
@@ -205,13 +209,14 @@ export const OperatorKiosk: React.FC = () => {
       const res = await syncOfflineBatch(offlineQueue);
       await set('offline_enrollment_queue', []);
       setOfflineQueue([]);
-      alert(
+      showToast(
+        'success',
         i18n.language === 'en'
-          ? `✅ ${res.synced_count} offline families successfully synced with server!`
-          : `✅ ${res.synced_count} ઓફલાઇન કુટુંબો સફળતાપૂર્વક સર્વર સાથે સિંક થઈ ગયા!`
+          ? `${res.synced_count} offline families successfully synced with server!`
+          : `${res.synced_count} ઓફલાઇન કુટુંબો સફળતાપૂર્વક સર્વર સાથે સિંક થઈ ગયા!`
       );
     } catch (e: any) {
-      alert(`Sync failed: ${e.message}`);
+      showToast('error', `Sync failed: ${e.message}`);
     } finally {
       setSyncing(false);
     }
@@ -221,8 +226,14 @@ export const OperatorKiosk: React.FC = () => {
     try {
       const res = await verifyFamilyQRToken(verifyTokenInput);
       setVerifyResult(res);
+      showToast(
+        'success',
+        i18n.language === 'en'
+          ? 'Valid Gujarat Family ID (Ed25519 Signature Verified)!'
+          : 'માન્ય ગુજરાત ફેમિલી આઈડી (Ed25519 ડિજિટલ સહી ચકાસાયેલ)!'
+      );
     } catch (e: any) {
-      alert(`Verification failed: ${e.message}`);
+      showToast('error', `Verification failed: ${e.message}`);
     }
   };
 

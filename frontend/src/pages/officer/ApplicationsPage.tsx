@@ -6,6 +6,7 @@ import {
   Search, Filter, CheckCircle, XCircle, Clock, Eye, ChevronDown,
   Loader2, AlertTriangle, User, FileText, Info
 } from 'lucide-react';
+import { showToast } from '../../helpers/showToast';
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
   submitted: { label: 'Submitted / રજૂ', color: 'bg-blue-50 text-blue-900 border border-blue-300 font-bold' },
@@ -166,7 +167,6 @@ export default function OfficerApplicationsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [deciding, setDeciding] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   const district = localStorage.getItem('gujid_district') || undefined;
 
@@ -185,12 +185,10 @@ export default function OfficerApplicationsPage() {
     setDeciding(appId);
     try {
       await applicationsApi.postDecision(appId, decision);
-      setToast({ msg: `Application ${decision} successfully`, type: 'success' });
-      setTimeout(() => setToast(null), 3000);
+      showToast('success', `Application ${decision} successfully`);
       fetchApps();
     } catch (e: any) {
-      setToast({ msg: e.message || 'Action failed', type: 'error' });
-      setTimeout(() => setToast(null), 3000);
+      showToast('error', e.message || 'Action failed');
     } finally { setDeciding(null); }
   };
 
@@ -200,14 +198,6 @@ export default function OfficerApplicationsPage() {
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-xl text-white text-sm font-medium transition-all ${
-          toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`}>
-          {toast.msg}
-        </div>
-      )}
 
       <div>
         <h1 className="text-2xl font-black text-slate-900">Applications / અરજીઓ</h1>

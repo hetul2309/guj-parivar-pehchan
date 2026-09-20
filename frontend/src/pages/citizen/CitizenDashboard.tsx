@@ -14,6 +14,7 @@ import {
   createApplication, submitApplication, getCitizenApplications, ApplicationItem
 } from '../../api/applications';
 import { sendChatMessage, ChatMessage } from '../../api/grievance';
+import { showToast } from '../../helpers/showToast';
 
 export const CitizenDashboard: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -90,7 +91,8 @@ export const CitizenDashboard: React.FC = () => {
         applicant_person_id: applicantId
       });
       await submitApplication(res.application_id);
-      alert(
+      showToast(
+        'success',
         i18n.language === 'en'
           ? `Application (${res.application_id}) submitted successfully! SMS notification sent.`
           : i18n.language === 'hi'
@@ -99,7 +101,7 @@ export const CitizenDashboard: React.FC = () => {
       );
       loadAllData();
     } catch (e: any) {
-      alert(`Error: ${e.message}`);
+      showToast('error', `Error: ${e.message}`);
     }
   };
 
