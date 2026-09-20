@@ -1,0 +1,232 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-PHC-DAH-01",
+        "name": "Devgadh Baria Community Health Center / PHC",
+        "type": "phc",
+        "district_code": "DAHOD",
+        "village_lgd": "VIL-DAH-008"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [74.3100, 22.9450]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-PHC-DAH-02",
+        "name": "Zalod Taluka Primary Health Centre",
+        "type": "phc",
+        "district_code": "DAHOD",
+        "village_lgd": "VIL-DAH-015"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [74.1500, 23.1200]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-SCH-DAH-01",
+        "name": "Limkheda Ashram Shala & Secondary High School",
+        "type": "school",
+        "district_code": "DAHOD",
+        "village_lgd": "VIL-DAH-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [74.2100, 22.8400]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-ANG-DAH-01",
+        "name": "Limkheda Anganwadi Center #4",
+        "type": "anganwadi",
+        "district_code": "DAHOD",
+        "village_lgd": "VIL-DAH-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [74.2510, 22.8360]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-RAT-DAH-01",
+        "name": "Dahod Gram Fair Price Ration Shop #12",
+        "type": "ration_shop",
+        "district_code": "DAHOD",
+        "village_lgd": "VIL-DAH-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [74.2480, 22.8320]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-BNK-DAH-01",
+        "name": "Bank of Baroda & BC Point Limkheda",
+        "type": "bank",
+        "district_code": "DAHOD",
+        "village_lgd": "VIL-DAH-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [74.2530, 22.8310]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-PHC-AHM-01",
+        "name": "Sanand Urban Community Health Centre",
+        "type": "phc",
+        "district_code": "AHMEDABAD",
+        "village_lgd": "VIL-AHM-002"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.3800, 22.9800]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-SCH-AHM-01",
+        "name": "Bopal Government High School",
+        "type": "school",
+        "district_code": "AHMEDABAD",
+        "village_lgd": "VIL-AHM-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.4800, 23.0300]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-RAT-AHM-01",
+        "name": "Ahmedabad FPS #89",
+        "type": "ration_shop",
+        "district_code": "AHMEDABAD",
+        "village_lgd": "VIL-AHM-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.4900, 23.0320]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-BNK-AHM-01",
+        "name": "SBI Satellite Branch",
+        "type": "bank",
+        "district_code": "AHMEDABAD",
+        "village_lgd": "VIL-AHM-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.5100, 23.0250]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-PHC-KUT-01",
+        "name": "Nakhatrana Remote Primary Health Centre",
+        "type": "phc",
+        "district_code": "KUTCH",
+        "village_lgd": "VIL-KUT-005"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [69.2600, 23.3500]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-SCH-KUT-01",
+        "name": "Bhuj Government Secondary Vidyalaya",
+        "type": "school",
+        "district_code": "KUTCH",
+        "village_lgd": "VIL-KUT-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [69.6700, 23.2500]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-RAT-KUT-01",
+        "name": "Kutch Border Fair Price Shop #04",
+        "type": "ration_shop",
+        "district_code": "KUTCH",
+        "village_lgd": "VIL-KUT-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [69.6800, 23.2450]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-RAT-SUR-01",
+        "name": "Surat Pandesara Migrant Fair Price Shop",
+        "type": "ration_shop",
+        "district_code": "SURAT",
+        "village_lgd": "VIL-SUR-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.8200, 21.1600]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-PHC-SUR-01",
+        "name": "Surat Municipal Corporation UPHC",
+        "type": "phc",
+        "district_code": "SURAT",
+        "village_lgd": "VIL-SUR-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.8300, 21.1700]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "facility_id": "FAC-SCH-SUR-01",
+        "name": "Surat Model Primary School #14",
+        "type": "school",
+        "district_code": "SURAT",
+        "village_lgd": "VIL-SUR-001"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [72.8150, 21.1650]
+      }
+    }
+  ]
+}
