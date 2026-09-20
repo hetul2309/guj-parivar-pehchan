@@ -1,4 +1,4 @@
-# PART 2 — SHARED CONTRACT
+# SHARED SYSTEM CONTRACT
 
 ## 2.1 Stack
 
@@ -16,24 +16,26 @@
 ```
 family-id/
   docker-compose.yml
-  docs/CONTEXT.md          # Parts 1 + 2 of this file
-  docs/CONTRACT.md         # Part 2 only; the source of truth
+  docs/CONTEXT.md          # Architecture, modules and storyline
+  docs/CONTRACT.md         # The system contract and API specification
   backend/
     app/
-      main.py              # auto-discovers routers; nobody edits after Phase 0
-      core/                # db.py, auth.py, events.py, access_log.py, sms.py, i18n.py (Phase 0, shared)
+      main.py              # auto-discovers routers
+      core/                # db.py, auth.py, events.py, access_log.py, sms.py, i18n.py
       modules/<module>/    # router.py, models.py, schemas.py, service.py, tests/
       mocks/<system>/      # fake external systems
     migrations/            # Alembic
     seed/
   frontend/
     src/
-      App.tsx              # imports the 4 role route files; nobody edits after Phase 0
-      pages/citizen/  pages/operator/     # Member A
-      pages/officer/  pages/admin/        # Member B
-      api/<module>.ts      # typed client, written by the module OWNER
-      components/shared/   # Phase 0 only; after that, additions by PR with the other's OK
-      i18n/{en,gu,hi}/<module>.json       # one file per module, never a shared file
+      App.tsx              # Application routing & role guards
+      pages/citizen/       # Citizen portal
+      pages/operator/      # Operator kiosk
+      pages/officer/       # Officer dashboard, map & verification
+      pages/admin/         # Scheme studio & audit ledger
+      api/<module>.ts      # Typed clients per module
+      components/shared/   # Shared UI components
+      i18n/                # Localization resources
 ```
 
 ## 2.3 Core schema
@@ -68,7 +70,7 @@ app_user(user_id, role, district_code NULL, person_id NULL, password_hash, displ
 def publish(name: str, payload: dict) -> None
 def subscribe(name: str):   # decorator: @subscribe("family.updated")
 
-# core/access_log.py — B owns the implementation, A calls it everywhere
+# core/access_log.py — Audit logging called across modules
 def log_access(actor_id: str, family_id: str, purpose: str, fields: list[str]) -> None
 
 # core/sms.py — mock; prints + stores in `sms_outbox` table, shown in a debug page
@@ -83,22 +85,22 @@ def current_user() -> AppUser       # FastAPI dependency
 def require_role(*roles)            # FastAPI dependency
 ```
 
-## 2.5 Frozen events
+## 2.5 System Events
 
 | Event | Emitted by | Payload | Consumed by |
 |---|---|---|---|
-| `family.created` | A (M1) | `{family_id}` | B: eligibility recompute |
-| `family.updated` | A (M1) | `{family_id, changed: [fields]}` | B: eligibility recompute |
-| `family.member_event` | A (M1) | `{family_id, person_id, kind}` — kind: `birth`,`death`,`marriage_out`,`marriage_in` | B: eligibility recompute |
-| `family.migrated` | A (M1) | `{family_id, from_lgd, to_lgd, temporary: bool}` | B: M8 portability |
-| `application.status_changed` | A (M5) | `{application_id, family_id, scheme_id, status, reason_code}` | A: SMS; B: dashboard |
-| `eligibility.updated` | B (M4) | `{family_id, newly_eligible: [scheme_id]}` | A: notification + SMS |
+| `family.created` | M1 (Family Registry) | `{family_id}` | M4: eligibility recompute |
+| `family.updated` | M1 (Family Registry) | `{family_id, changed: [fields]}` | M4: eligibility recompute |
+| `family.member_event` | M1 (Family Registry) | `{family_id, person_id, kind}` — kind: `birth`,`death`,`marriage_out`,`marriage_in` | M4: eligibility recompute |
+| `family.migrated` | M1 (Family Registry) | `{family_id, from_lgd, to_lgd, temporary: bool}` | M8: portability |
+| `application.status_changed` | M5 (Applications) | `{application_id, family_id, scheme_id, status, reason_code}` | M5: SMS notification; Officer Dashboard |
+| `eligibility.updated` | M4 (Eligibility) | `{family_id, newly_eligible: [scheme_id]}` | Notification + SMS |
 
-## 2.6 Frozen cross-boundary APIs
+## 2.6 System APIs
 
 All under `/api`. JSON. Aadhaar is **always masked** (`aadhaar_last4` only) in every response.
 
-### Provided by Member A
+### Family & Application APIs
 
 ```
 GET  /api/families/{family_id}
@@ -127,14 +129,14 @@ POST /api/applications/{application_id}/decision
   → updated application; emits application.status_changed
 ```
 
-### Provided by core (Phase 0)
+### Core Platform APIs
 
 ```
 GET  /api/villages?district_code=   → [{village_lgd, name_en, name_gu, district_code, lat, lng}]
 GET  /api/notifications/me          → [{id, text, created_at, read}]
 ```
 
-### Provided by Member B
+### Schemes, Spatial & Ledger APIs
 
 ```
 GET  /api/families/{family_id}/eligibility
@@ -145,20 +147,21 @@ GET  /api/families/{family_id}/eligibility
 GET  /api/schemes            → [{scheme_id, name_en, name_gu, department, required_docs: [doc_type], rule}]
 GET  /api/schemes/{scheme_id}
 
-GET  /api/geo/families/{family_id}/nearest
-  → [{facility_type, name, distance_km, lat, lng}]   # phc, school, anganwadi, ration_shop, bank
+GET  /api/geo/facilities
+GET  /api/geo/access-gap
+GET  /api/geo/camps
 
 GET  /api/ledger/families/{family_id}   → access history for the citizen view
 ```
 
-## 2.7 Frozen enums
+## 2.7 Enums
 
 - **Application status:** `draft` → `submitted` → `under_verification` → `approved` → `disbursed`; or `rejected` → (`submitted` on resubmit).
 - **Reason codes:** `INCOME_CERT_EXPIRED`, `INCOME_ABOVE_LIMIT`, `DOC_NAME_MISMATCH`, `DOC_ILLEGIBLE`, `NOT_ELIGIBLE_AGE`, `DUPLICATE_BENEFICIARY`, `MISSING_DOCUMENT`, `OTHER`.
 - **Doc types:** `aadhaar`, `ration_card`, `income_cert`, `caste_cert`, `bank_passbook`, `death_cert_spouse`, `disability_cert`, `education_cert`, `address_proof`.
 - **Facility types:** `phc`, `school`, `anganwadi`, `ration_shop`, `bank`.
 
-## 2.8 Demo users (seeded in Phase 0)
+## 2.8 Demo Users
 
 | Username | Role | District |
 |---|---|---|
@@ -169,4 +172,4 @@ GET  /api/ledger/families/{family_id}   → access history for the citizen view
 | `admin_social` | dept_admin | — |
 | `superadmin` | super_admin | — |
 
-Password for all: `demo123`.
+Password for all: `demo123` / `password123`.

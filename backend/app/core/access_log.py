@@ -16,7 +16,7 @@ def log_access(
     db: Optional[Session] = None
 ) -> None:
     """Public helper for logging data access into the tamper-evident ledger (M7).
-    Called by Member A and Member B on every read of family data.
+    Called across modules on every read of family data.
     """
     timestamp = datetime.utcnow().isoformat()
     logger.info(f"[ACCESS LOG] actor={actor_id} family={family_id} purpose={purpose} fields={fields} at {timestamp}")

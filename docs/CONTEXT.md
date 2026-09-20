@@ -1,47 +1,39 @@
-# PART 1 — OVERALL PLAN
+# PART 1 — SYSTEM OVERVIEW & ARCHITECTURE
 
 ## 1.1 Project in one paragraph
 
 **Gujarat Family ID Platform.** Every family gets a unique Family ID (`GJ-XXXXXXXX`). Government departments use it to find eligible beneficiaries and manage scheme benefits. The platform is built for the **villager** who may have only an Aadhaar card, no PAN, no smartphone, and who enrolls through a village operator (VCE, ASHA worker or Talati). It integrates **Aadhaar** (offline Secure QR, masked storage), **PAN** (optional, income check only), and **PM Gati Shakti**-style geo layers (facility access gaps, camp planning).
 
-## 1.2 Team split
+## 1.2 Modular Architecture
 
-| | Member A — "Family & Villager" | Member B — "Schemes & Government" |
-|---|---|---|
-| Modules | M1 Family Registry & Graph, M2 Identity Resolution, M3 Assisted/QR Enrollment, M5 Applications & Documents, M9 Grievance Assistant | M4 Eligibility Engine, M6 Gati Shakti Geo Layer, M7 Consent & Access Ledger, M10 Analytics & Text-to-SQL, M8 Migration, M11 Health Nudges (stretch) |
-| Frontend routes | `/citizen/*`, `/operator/*` + exceptions below | `/officer/*`, `/admin/*` + exceptions below |
-| Backend folders | `modules/family`, `modules/identity`, `modules/enrollment`, `modules/applications`, `modules/grievance`, `mocks/uidai`, `mocks/digilocker`, `mocks/pan`, `mocks/nfsa` | `modules/eligibility`, `modules/geo`, `modules/ledger`, `modules/analytics`, `modules/migration`, `modules/health`, `mocks/gatishakti` |
-| Seed data | `seed/families.py` (~500 families) | `seed/schemes.py` (~12 schemes), `seed/facilities.geojson` |
-
-**Page ownership exceptions**:
-- `pages/officer/grievances/`: Owner A (M9)
-- `pages/officer/identity-review/`: Owner A (M2)
-- `pages/citizen/privacy/`: Owner B (M7)
-- `pages/citizen/health/`: Owner B (M11)
-
-## 1.3 Phases and checkpoints
-
-| Phase | Share of time | Member A | Member B | Joint checkpoint test |
+| Component | Modules | Frontend Routes | Backend Folders | Seed Data |
 |---|---|---|---|---|
-| 0 | ~5% | Together: repo, core, schema, contract | Together | Both can run the app and log in as every demo role |
-| 1 | ~20% | M1 + M2, stub for B's needs, family seed | M4 engine, M7 helper, scheme seed, stubs for A's needs | **CP1:** registering a family shows correct eligible schemes with reasons |
-| 2 | ~30% | M3 + M5 (citizen + operator UI, decision API) | M6 map + gap heatmap, officer approval screen, M7 citizen/admin views | **CP2:** Kantaben enrolled offline → applies → officer approves on B's screen → SMS mock |
-| 3 | ~25% | M9 grievance assistant, polish villager UX | M10 Text-to-SQL, M8 migration, dashboard | **CP3:** full demo storyline end to end |
-| 4 | ~20% | Bug fixes only, rehearse | M11 if time, bug fixes, rehearse | Two full demo rehearsals, timed |
+| **Citizen & Villager Services** | M1 Family Registry & Graph, M2 Identity Resolution, M3 Assisted/QR Enrollment, M5 Applications & Documents, M9 Grievance Assistant | `/citizen/*`, `/operator/*`, `/officer/grievances`, `/officer/identity-review` | `modules/family`, `modules/identity`, `modules/enrollment`, `modules/applications`, `modules/grievance`, `mocks/uidai`, `mocks/digilocker`, `mocks/pan`, `mocks/nfsa` | `seed/families.py` (~500 families) |
+| **Government & Schemes Platform** | M4 Eligibility Engine, M6 Gati Shakti Geo Layer, M7 Consent & Access Ledger, M10 Analytics & Text-to-SQL, M8 Migration, M11 Health Nudges | `/officer/*`, `/admin/*`, `/citizen/privacy` | `modules/eligibility`, `modules/geo`, `modules/ledger`, `modules/analytics`, `modules/migration`, `modules/health`, `mocks/gatishakti` | `seed/schemes.py` (~12 schemes), `seed/facilities.geojson` |
 
-## 1.4 Demo storyline
+## 1.3 Implementation Roadmap & Verification Milestones
 
-1. Kantaben, 62, widow, Dahod village, no PAN, no smartphone.
-2. VCE (operator) scans her Aadhaar Secure QR offline → form auto-fills → name matches ration card despite Gujarati spelling. (A: M3, M2)
-3. Eligibility shows widow pension, old-age pension, PM-JAY, each with reasons. Operator applies with her consent. (B: M4, A: M5)
-4. Officer approves on the officer screen → Gujarati SMS (mock). (B UI → A API)
-5. Map: nearest PHC 14 km; her cluster lights up on the access-gap heatmap. (B: M6)
-6. Collector asks "widows in Dahod eligible but not receiving pension" → instant answer. (B: M10)
-7. Family sees who accessed their data; admin verifies the hash chain. (B: M7)
+| Milestone | Focus | Key Deliverables | Verification Test |
+|---|---|---|---|
+| 0 | Core Foundation | Base schema, JWT auth, i18n, shared components | All demo personas log in successfully |
+| 1 | Identity & Schemes Engine | M1 Registry, M2 Name matching, M4 Eligibility engine, M7 Ledger helper | Registering a family accurately evaluates eligible schemes with justification |
+| 2 | Kiosk, Verification & Map | M3 Offline QR kiosk, M5 Decision API, M6 GIS heatmap, Officer approval screen | Offline QR enrollment → application submission → officer approval → SMS dispatch |
+| 3 | AI Assistant & Analytics | M9 Multilingual Grievance voice/text, M10 Text-to-SQL, M8 Portability migration | End-to-end citizen grievance and collector text-to-SQL queries |
+| 4 | Hardening & Polish | System audit, offline synchronization, accessibility | Full end-to-end integration and smoke testing |
+
+## 1.4 Demo Storyline
+
+1. **Beneficiary Profile**: Kantaben, 62, widow, Dahod village, no PAN, no smartphone.
+2. **Kiosk Enrollment**: VCE (operator) scans her Aadhaar Secure QR offline → form auto-fills → name matches ration card despite Gujarati transliteration nuances (M3, M2).
+3. **Proactive Entitlements**: Eligibility engine shows widow pension, old-age pension, and PM-JAY, each with transparent rule justifications. Operator submits application with her consent (M4, M5).
+4. **Officer Review**: Verification officer approves the application on the officer dashboard → notification & mock SMS dispatched.
+5. **GIS Gap Analysis**: Gati Shakti map calculates nearest PHC (14 km) and displays her village cluster on the access-gap heatmap (M6).
+6. **Executive Intelligence**: Collector queries "widows in Dahod eligible but not receiving pension" via Text-to-SQL → receives instant, verified data table (M10).
+7. **DPDP Auditability**: Citizen checks who accessed their family data; Department Admin verifies the tamper-evident cryptographic hash chain (M7).
 
 ---
 
-# PART 2 — SHARED CONTRACT
+# PART 2 — SHARED SPECIFICATION
 
 ## 2.1 Stack
 
@@ -54,7 +46,7 @@
 | Auth | JWT; roles: `citizen`, `operator`, `officer`, `dept_admin`, `super_admin`; officers carry `district_code` |
 | Languages | `en`, `gu`, `hi` — Gujarati is the default for citizen/operator screens |
 
-## 2.2 Core schema
+## 2.2 Core Schema
 
 ```sql
 person(person_id UUID PK, name_en, name_gu, dob DATE, dob_precision TEXT,
@@ -75,7 +67,7 @@ events(id, name, payload JSONB, created_at)
 app_user(user_id, role, district_code NULL, person_id NULL, password_hash, display_name)
 ```
 
-## 2.3 Frozen APIs (Summary)
-- A provides: `/api/families/{id}`, `/api/families`, `/api/families/{id}/documents`, `PATCH /api/families/{id}/address`, `/api/applications`, `POST /api/applications/{id}/decision`
-- B provides: `/api/families/{id}/eligibility`, `/api/schemes`, `/api/geo/families/{id}/nearest`, `/api/ledger/families/{id}`
-- Core provides: `/api/villages`, `/api/notifications/me`
+## 2.3 System APIs (Summary)
+- **Family & Registry APIs**: `/api/families/{id}`, `/api/families`, `/api/families/{id}/documents`, `PATCH /api/families/{id}/address`, `/api/applications`, `POST /api/applications/{id}/decision`
+- **Schemes & Spatial APIs**: `/api/families/{id}/eligibility`, `/api/schemes`, `/api/geo/facilities`, `/api/geo/access-gap`, `/api/geo/camps`, `/api/ledger/families/{id}`
+- **Core Platform APIs**: `/api/villages`, `/api/notifications/me`

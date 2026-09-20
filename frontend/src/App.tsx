@@ -13,7 +13,7 @@ import { ShieldAlert, ArrowRight } from 'lucide-react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Member B Integrated Pages
+// Officer & Administrative Pages
 import OfficerDashboardPage from './pages/officer/DashboardPage';
 import OfficerMapPage from './pages/officer/MapPage';
 import OfficerApplicationsPage from './pages/officer/ApplicationsPage';

@@ -1,4 +1,4 @@
-# ~12 Government Schemes for Gujarat Family ID Platform (Member B)
+# ~12 Government Schemes for Gujarat Family ID Platform
 
 SEED_SCHEMES = [
     {

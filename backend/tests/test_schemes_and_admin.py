@@ -191,4 +191,4 @@ if __name__ == "__main__":
     print("✓ M10 Text-to-SQL Tests Passed")
     test_m8_migration()
     print("✓ M8 Migration Tests Passed")
-    print("\n🎉 ALL MEMBER B BACKEND TESTS PASSED!")
+    print("\n🎉 ALL SCHEMES & GOV BACKEND TESTS PASSED!")

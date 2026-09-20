@@ -10,6 +10,7 @@ from backend.app.core.models import (
     Person, Family, FamilyMember, AadhaarVault, IdLink, NameReview, Document, FraudFlag, AppUser
 )
 from backend.app.core.auth import current_user, require_role
+from backend.app.core.sms import send_sms
 from backend.app.modules.identity.vault import encrypt_and_vault_aadhaar
 from backend.app.modules.identity.name_matching import match_name
 from backend.app.mocks.uidai.make_test_qr import decode_secure_qr, generate_test_qr_payload
@@ -80,6 +81,8 @@ def get_sample_qr():
 # --- 2. Aadhaar OTP e-KYC Mock ---
 @router.post("/aadhaar/otp/send")
 def send_aadhaar_otp(payload: OTPRequest):
+    if payload.mobile:
+        send_sms(payload.mobile, "sms.aadhaar_otp", "gu", otp="123456")
     return {"success": True, "message": "OTP sent to Aadhaar-linked mobile (Demo OTP: 123456)"}
 
 @router.post("/aadhaar/otp/verify")

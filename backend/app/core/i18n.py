@@ -8,6 +8,11 @@ TRANSLATIONS = {
         "hi": "नमस्ते {name}, गुजरात फैमिली आईडी {family_id} सफलतापूर्वक बन गया है।",
         "en": "Hello {name}, your Gujarat Family ID {family_id} has been successfully generated."
     },
+    "sms.aadhaar_otp": {
+        "gu": "ગુજરાત ફેમિલી આઈડી e-KYC માટે તમારો OTP {otp} છે. આ OTP ૧૦ મિનિટ માટે માન્ય છે. (Demo OTP: 123456)",
+        "hi": "गुजरात फैमिली आईडी e-KYC के लिए आपका OTP {otp} है। यह OTP १० मिनट के लिए मान्य है। (Demo OTP: 123456)",
+        "en": "Your OTP for Gujarat Family ID Aadhaar e-KYC is {otp}. Valid for 10 minutes. (Demo OTP: 123456)"
+    },
     "sms.application_submitted": {
         "gu": "તમારી યોજના અરજી {application_id} ({scheme_name}) સફળતાપૂર્વક સ્વીકારાઈ છે.",
         "hi": "आपकी योजना अर्ज़ी {application_id} ({scheme_name}) सफलतापूर्वक जमा हो गई है।",

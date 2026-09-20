@@ -3,9 +3,9 @@ Master Integrated Seeding Script for Gujarat Family ID Platform
 Seeds:
 1. All DB tables (Base.metadata.create_all)
 2. Demo Users & Demo Villages (Phase 0)
-3. Member B Gati Shakti Facilities (from facilities.geojson)
-4. Member B Government Schemes (from schemes.py)
-5. Member A Demo Families (Kantaben GJ-38915001, etc.)
+3. Gati Shakti Facilities (from facilities.geojson)
+4. Government Schemes (from schemes.py)
+5. Demo Families (Kantaben GJ-38915001, etc.)
 6. Initializes Analytics Views
 7. Precomputes Scheme Eligibility for Kantaben
 """
@@ -98,8 +98,8 @@ def seed_all():
         db.commit()
         print(f"   -> {s_count} schemes seeded.")
 
-        # 4. Seed Member A Families (Kantaben GJ-38915001)
-        print("👨‍👩‍👧 Seeding Member A Families & Demo Beneficiaries...")
+        # 4. Seed Demo Families (Kantaben GJ-38915001)
+        print("👨‍👩‍👧 Seeding Demo Families & Beneficiaries...")
         seed_families()
 
 
