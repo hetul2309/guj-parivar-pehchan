@@ -70,6 +70,54 @@ def login(payload: dict, db: Session = Depends(get_db)):
         }
     }
 
+@app.post("/api/auth/register")
+def register(payload: dict, db: Session = Depends(get_db)):
+    username = (payload.get("username") or "").strip()
+    password = (payload.get("password") or "").strip()
+    display_name = (payload.get("display_name") or "").strip()
+    role = (payload.get("role") or "citizen").strip()
+    district_code = (payload.get("district_code") or "DAHOD").strip().upper()
+
+    if not username or not password or not display_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username, password, and full name are required."
+        )
+
+    existing = db.query(AppUser).filter(AppUser.user_id == username).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered. Please choose another or log in."
+        )
+
+    from backend.app.core.auth import get_password_hash
+    pw_hash = get_password_hash(password)
+
+    new_user = AppUser(
+        user_id=username,
+        role=role,
+        district_code=district_code,
+        display_name=display_name,
+        password_hash=pw_hash
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    token = create_access_token(data={"sub": new_user.user_id, "role": new_user.role})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "user_id": new_user.user_id,
+            "role": new_user.role,
+            "display_name": new_user.display_name,
+            "district_code": new_user.district_code,
+            "person_id": new_user.person_id
+        }
+    }
+
 # --- Core Villages API ---
 @app.get("/api/villages")
 def get_villages(district_code: Optional[str] = None, db: Session = Depends(get_db)):

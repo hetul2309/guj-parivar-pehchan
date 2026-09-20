@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './components/shared/Header';
 import { LoginPage } from './pages/login/LoginPage';
+import { RegisterPage } from './pages/login/RegisterPage';
 import { CitizenDashboard } from './pages/citizen/CitizenDashboard';
 import { OperatorKiosk } from './pages/operator/OperatorKiosk';
 import { IdentityReviewPage } from './pages/officer/IdentityReviewPage';
@@ -27,6 +28,8 @@ export const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/citizen" replace />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/signup" element={<RegisterPage />} />
             
             {/* Member A Core Routes */}
             <Route path="/citizen/*" element={<CitizenDashboard />} />
