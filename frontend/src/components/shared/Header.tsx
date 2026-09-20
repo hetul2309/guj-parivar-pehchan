@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Wifi, WifiOff, LogOut, UserCircle2, ArrowRightLeft, LayoutDashboard, UserCheck, Smartphone } from 'lucide-react';
+import { Wifi, WifiOff, LogOut, UserCircle2, ArrowRightLeft, LayoutDashboard, Lock, Layers } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -11,6 +11,7 @@ export const Header: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const userJson = localStorage.getItem('family_id_user');
   const user = userJson ? JSON.parse(userJson) : null;
+  const role = user?.role; // 'citizen', 'operator', 'officer', 'dept_admin', 'super_admin'
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -39,14 +40,64 @@ export const Header: React.FC = () => {
     navigate('/login');
   };
 
-  const isLoginPage = location.pathname === '/login';
+  const isLoginPage = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/signup';
+
+  // Role-Specific Navigation Links
+  const getNavLinks = () => {
+    if (!user || role === 'citizen') {
+      // Regular citizens only see citizen-relevant links
+      return [
+        { to: '/citizen', label: t('navCitizen') },
+        { to: '/citizen/privacy', label: t('navPrivacy') }
+      ];
+    }
+    if (role === 'operator') {
+      // VCE operators see Kiosk and Citizen card verification
+      return [
+        { to: '/operator', label: t('navOperator') },
+        { to: '/citizen', label: t('citizenView') }
+      ];
+    }
+    if (role === 'officer') {
+      // Verification officers see approval dashboard, applications, map and citizen view
+      return [
+        { to: '/officer/dashboard', label: t('navDashboard'), icon: LayoutDashboard },
+        { to: '/officer/applications', label: t('navApplications') },
+        { to: '/officer/map', label: t('navMap') },
+        { to: '/officer/grievances', label: t('navGrievance') },
+        { to: '/citizen', label: t('citizenView') }
+      ];
+    }
+    if (role === 'dept_admin') {
+      // Department admins see scheme studio, audit and dashboard
+      return [
+        { to: '/admin/schemes', label: t('navSchemes') },
+        { to: '/admin/audit', label: t('navAudit') },
+        { to: '/officer/dashboard', label: t('navDashboard'), icon: LayoutDashboard }
+      ];
+    }
+    // super_admin sees administrative controls
+    return [
+      { to: '/officer/dashboard', label: t('navDashboard'), icon: LayoutDashboard },
+      { to: '/officer/map', label: t('navMap') },
+      { to: '/admin/schemes', label: t('navSchemes') },
+      { to: '/admin/audit', label: t('navAudit') },
+      { to: '/operator', label: t('navOperator') },
+      { to: '/citizen', label: t('navCitizen') }
+    ];
+  };
+
+  const navLinks = getNavLinks();
 
   return (
     <header className="sticky top-0 z-50 w-full h-16 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full gap-2">
           {/* Left: Brand Logo & Title with Govt of Gujarat Badge */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
+          <Link
+            to={role === 'operator' ? '/operator' : (role === 'citizen' || !role ? '/citizen' : '/officer/dashboard')}
+            className="flex items-center gap-3 group shrink-0"
+          >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-700 to-teal-500 flex items-center justify-center text-white font-black text-xl shadow-sm group-hover:scale-105 transition-transform duration-200">
               ગુ
             </div>
@@ -63,39 +114,26 @@ export const Header: React.FC = () => {
             </div>
           </Link>
 
-          {/* Center: Simplified Clean Primary Navigation */}
+          {/* Center: Strict Role-Based Primary Navigation */}
           <nav className="hidden md:flex items-center gap-1.5">
-            <Link
-              to="/citizen"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 ${
-                location.pathname.startsWith('/citizen')
-                  ? 'bg-teal-700 text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              {t('navCitizen')}
-            </Link>
-            <Link
-              to="/operator"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 ${
-                location.pathname.startsWith('/operator')
-                  ? 'bg-teal-700 text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              {t('navOperator')}
-            </Link>
-            <Link
-              to="/officer/dashboard"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center gap-1.5 ${
-                location.pathname.startsWith('/officer') || location.pathname.startsWith('/admin')
-                  ? 'bg-teal-700 text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>{t('navDashboard')}</span>
-            </Link>
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.to || (link.to !== '/' && location.pathname.startsWith(link.to));
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-teal-700 text-white shadow-xs'
+                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {Icon && <Icon className="w-3.5 h-3.5" />}
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right: Online Status, Multilingual Switcher, Persona / Login Control */}
