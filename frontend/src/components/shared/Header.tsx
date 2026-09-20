@@ -24,9 +24,25 @@ export const Header: React.FC = () => {
     };
   }, []);
 
+  const [currentLang, setCurrentLang] = useState(
+    i18n.language?.slice(0, 2) || localStorage.getItem('gujid_lang') || 'gu'
+  );
+
+  useEffect(() => {
+    const onLangChanged = (lng: string) => {
+      setCurrentLang(lng.slice(0, 2));
+    };
+    i18n.on('languageChanged', onLangChanged);
+    return () => {
+      i18n.off('languageChanged', onLangChanged);
+    };
+  }, [i18n]);
+
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('gujid_lang', lang);
+    setCurrentLang(lang);
+    window.dispatchEvent(new Event('languagechange'));
   };
 
   const handleLogout = () => {
@@ -158,7 +174,7 @@ export const Header: React.FC = () => {
                   type="button"
                   onClick={() => handleLanguageChange(lang)}
                   className={`px-2.5 py-1 rounded-lg font-extrabold transition duration-150 ${
-                    i18n.language === lang
+                    currentLang === lang
                       ? 'bg-teal-700 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}

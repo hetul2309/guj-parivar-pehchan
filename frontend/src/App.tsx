@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Header } from './components/shared/Header';
 import { LoginPage } from './pages/login/LoginPage';
 import { RegisterPage } from './pages/login/RegisterPage';
@@ -58,13 +59,14 @@ const RoleGuard: React.FC<{ allowedRoles: string[]; children: React.ReactElement
 };
 
 export const App: React.FC = () => {
+  const { i18n } = useTranslation();
   const userJson = localStorage.getItem('family_id_user');
   const user = userJson ? JSON.parse(userJson) : null;
   const defaultHome = user?.role === 'operator' ? '/operator' : (user?.role === 'citizen' || !user ? '/citizen' : '/officer/dashboard');
 
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 antialiased selection:bg-teal-600 selection:text-white">
+      <div key={i18n.language} className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 antialiased selection:bg-teal-600 selection:text-white">
         <ToastContainer />
         <Header />
 
