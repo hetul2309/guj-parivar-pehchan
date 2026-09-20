@@ -6,6 +6,13 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+import httpx
+from dotenv import load_dotenv
+
+# Ensure .env is loaded
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../../../.env"))
 
 from backend.app.core.db import get_db
 from backend.app.core.models import (
@@ -73,7 +80,83 @@ def generate_grv_id(db: Session) -> str:
             return gid
     return f"GRV-{uuid.uuid4().hex[:5].upper()}"
 
-# --- 1. Chatbot Engine (with intelligent deterministic fallback + tool calling) ---
+def call_gemini_chat(messages: List[ChatMessage], lang: str, context: dict) -> Optional[str]:
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        return None
+
+    lang_name = "Gujarati (ગુજરાતી)" if lang == "gu" else ("Hindi (हिन्दी)" if lang == "hi" else "English")
+
+    system_instruction = f"""You are "ગુજરાત સહાયક" (Gujarat Sahayak), the empathetic, knowledgeable official AI assistant for Gujarat Family ID Platform (ગુજરાત સરકાર).
+Citizen Profile:
+- Name: Kantaben Patel (કાન્તાબેન પટેલ)
+- Family ID: {context.get('family_id', 'GJ-38915001')}
+- Residence: Dahod Rural, Gujarat (ગામ: દાહોદ ગ્રામ્ય)
+- Category: Scheduled Tribe (ST), Below Poverty Line (BPL), Widow (વિધવા)
+- Annual Income: ₹45,000 (as per Talati certificate)
+
+Family Members:
+- Kantaben Patel (Head of Family, 62 yrs, Widow)
+- Ramesh Patel (Son, 38 yrs, Daily wage laborer)
+- Savita Patel (Daughter-in-law, 35 yrs, Homemaker)
+- Bhavik Patel (Grandson, 14 yrs, 9th Class student)
+
+Active Applications for this family:
+{context.get('apps_summary', '- Application APP-2026-001 (Ganga Swarupa Widow Pension): REJECTED due to expired Talati income certificate (>3 years old).')}
+
+Available Gujarat Welfare Schemes for them:
+1. Ganga Swarupa Yojana (Widow Pension - ₹1,250/month)
+2. Vrudh Pension Yojana (Indira Gandhi Old Age Pension for 60+ - ₹1,000/month)
+3. NFSA Antyodaya / BPL Ration Card (Free food grains & essential commodities)
+4. Saraswati Sadhana Yojna (Free bicycle & educational assistance for girl & tribal students)
+5. PM Awas Yojana Gramin (₹1,20,000 for pucca house construction)
+6. Shravan Tirth Yojna (Subsidized senior citizen pilgrimage tour)
+
+Conversation Instructions:
+- Answer directly, warmly, and helpfully in {lang_name}.
+- Keep your reply concise (2-4 clear sentences or simple bullet points).
+- If citizen asks why their application was rejected, explain gently that the Talati income certificate was expired (>3 years) and advise them how to renew it at the e-Gram kiosk/Talati office, or tell them you can register an appeal/grievance to the Dahod Social Welfare Officer.
+- If citizen asks what schemes they or family members are eligible for, give specific advice tailored to Kantaben, her son, or grandson.
+- Avoid technical jargon; maintain high warmth and respect (આદરપૂર્વક / respectful speech).
+"""
+
+    contents = []
+    for idx, m in enumerate(messages[-5:]):
+        role = "user" if m.role == "user" else "model"
+        text = m.content
+        if idx == 0 and role == "user":
+            text = f"[Context: {system_instruction}]\n\nCitizen: {text}"
+        contents.append({
+            "role": role,
+            "parts": [{"text": text}]
+        })
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+    payload = {
+        "contents": contents,
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 450
+        }
+    }
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.post(url, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts and "text" in parts[0]:
+                        return parts[0]["text"].strip()
+            else:
+                print(f"Gemini API returned status {resp.status_code}: {resp.text[:150]}")
+    except Exception as e:
+        print(f"Gemini API error: {e}")
+    return None
+
+# --- 1. Chatbot Engine (with intelligent Gemini AI + tool calling & deterministic fallback) ---
 @router.post("/grievance/chat")
 def grievance_chat(
     payload: ChatRequest,
@@ -85,37 +168,13 @@ def grievance_chat(
     user_query_lower = user_query.lower()
 
     # Determine user's family
-    fid = payload.family_id
-    if not fid:
-        # Default fallback
-        fid = "GJ-38915001"
+    fid = payload.family_id or "GJ-38915001"
 
     # Fetch user's applications
     apps = db.query(Application).filter(Application.family_id == fid).all()
 
-    # Tool 1: Check if asking about rejection
-    is_rejection_query = any(k in user_query_lower for k in ["reject", "અસ્વીકાર", "નામંજૂર", "રદ", "ખારિજ", "કેમ", "why"])
-    if is_rejection_query:
-        rejected_app = next((a for a in apps if a.status == "rejected"), None)
-        if rejected_app and rejected_app.reason_code:
-            explanation = REASON_EXPLANATIONS.get(rejected_app.reason_code, {}).get(lang) or rejected_app.note or "નિયમો અનુસાર શરતો પૂર્ણ નથી."
-            if lang == "gu":
-                bot_reply = f"તમારી અરજી ({rejected_app.application_id}) અસ્વીકાર થવાનું મુખ્ય કારણ:\n\n👉 {explanation}\n\nશું તમે આ નિર્ણય વિરુદ્ધ અપીલ અથવા ફરિયાદ નોંધાવવા માંગો છો? હું તમારી ફરિયાદ નોંધી આપું?"
-            elif lang == "hi":
-                bot_reply = f"आपकी अर्ज़ी ({rejected_app.application_id}) अस्वीकार होने का मुख्य कारण:\n\n👉 {explanation}\n\nक्या आप इसके ख़िलाफ़ अपील दर्ज करना चाहते हैं?"
-            else:
-                bot_reply = f"Your application ({rejected_app.application_id}) was rejected because:\n\n👉 {explanation}\n\nWould you like me to register an appeal/grievance for this?"
-            
-            return {
-                "role": "assistant",
-                "content": bot_reply,
-                "suggested_action": "file_grievance",
-                "application_id": rejected_app.application_id,
-                "category": "wrong_rejection"
-            }
-
-    # Tool 2: Check if requesting to file grievance
-    is_file_request = any(k in user_query_lower for k in ["ફરિયાદ", "અપીલ", "complaint", "grievance", "file", "yes", "હા", "નોંધો", "દર્જ"])
+    # Tool: Check if requesting to file grievance
+    is_file_request = any(k in user_query_lower for k in ["ફરિયાદ નોંધો", "અપીલ નોંધો", "ફરિયાદ દાખલ", "ફરિયાદ કરો", "file grievance", "file complaint", "register grievance", "register complaint"])
     if is_file_request:
         grv_id = generate_grv_id(db)
         app_id = apps[0].application_id if apps else None
@@ -159,7 +218,50 @@ def grievance_chat(
             "status": "assigned"
         }
 
-    # Default friendly Gujarati assistant response
+    # Prepare context for Gemini
+    apps_summary_list = []
+    for a in apps:
+        reason_text = REASON_EXPLANATIONS.get(a.reason_code, {}).get(lang, a.reason_code) if a.reason_code else ""
+        apps_summary_list.append(f"- Application {a.application_id} (Scheme: {a.scheme_id}): Status {a.status.upper()} {f'(Reason: {reason_text})' if reason_text else ''}")
+    apps_summary = "\n".join(apps_summary_list) if apps_summary_list else "No active applications currently."
+
+    context = {
+        "family_id": fid,
+        "apps_summary": apps_summary
+    }
+
+    # 1. Attempt Gemini 2.5 Flash Dynamic Generation
+    gemini_reply = call_gemini_chat(payload.messages, lang, context)
+    if gemini_reply:
+        suggested = "file_grievance" if any(k in gemini_reply.lower() for k in ["rejection", "અસ્વીકાર", "ફરિયાદ", "અપીલ", "grievance"]) else None
+        return {
+            "role": "assistant",
+            "content": gemini_reply,
+            "suggested_action": suggested
+        }
+
+    # 2. Fallback: Check if asking about rejection
+    is_rejection_query = any(k in user_query_lower for k in ["reject", "અસ્વીકાર", "નામંજૂર", "રદ", "ખારિજ", "કેમ", "why"])
+    if is_rejection_query:
+        rejected_app = next((a for a in apps if a.status == "rejected"), None)
+        if rejected_app and rejected_app.reason_code:
+            explanation = REASON_EXPLANATIONS.get(rejected_app.reason_code, {}).get(lang) or rejected_app.note or "નિયમો અનુસાર શરતો પૂર્ણ નથી."
+            if lang == "gu":
+                bot_reply = f"તમારી અરજી ({rejected_app.application_id}) અસ્વીકાર થવાનું મુખ્ય કારણ:\n\n👉 {explanation}\n\nશું તમે આ નિર્ણય વિરુદ્ધ અપીલ અથવા ફરિયાદ નોંધાવવા માંગો છો? હું તમારી ફરિયાદ નોંધી આપું?"
+            elif lang == "hi":
+                bot_reply = f"आपकी अर्ज़ी ({rejected_app.application_id}) अस्वीकार होने का मुख्य कारण:\n\n👉 {explanation}\n\nक्या आप इसके ख़िलाफ़ अपील दर्ज करना चाहते हैं?"
+            else:
+                bot_reply = f"Your application ({rejected_app.application_id}) was rejected because:\n\n👉 {explanation}\n\nWould you like me to register an appeal/grievance for this?"
+            
+            return {
+                "role": "assistant",
+                "content": bot_reply,
+                "suggested_action": "file_grievance",
+                "application_id": rejected_app.application_id,
+                "category": "wrong_rejection"
+            }
+
+    # 3. Fallback: Default friendly assistant response
     if lang == "gu":
         reply = "નમસ્તે! હું ગુજરાત ફેમિલી સહાયક છું. હું તમને:\n૧. યોજના અરજીની સ્થિતિ તપાસવામાં,\n૨. અરજી રદ થવાનું કારણ સમજાવવામાં, અથવા\n૩. અધિકારી સમક્ષ સીધી ફરિયાદ/અપીલ નોંધવામાં મદદ કરી શકું છું.\n\nતમે શું જાણવા માંગો છો?"
     elif lang == "hi":
