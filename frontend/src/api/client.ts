@@ -1,4 +1,5 @@
-export const API_BASE = '/api';
+const ENV_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+export const API_BASE = ENV_URL ? `${ENV_URL}/api` : '/api';
 
 export function getAuthHeaders() {
   const token = localStorage.getItem('family_id_token') || localStorage.getItem('gujid_token');
@@ -14,7 +15,16 @@ export async function fetchApi<T>(url: string, options: RequestInit = {}): Promi
     ...(options.headers || {})
   };
   
-  const targetUrl = url.startsWith('http') ? url : (url.startsWith('/api') ? url : `${API_BASE}${url}`);
+  let targetUrl: string;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    targetUrl = url;
+  } else if (ENV_URL) {
+    const cleanPath = url.startsWith('/api') ? url : `/api${url.startsWith('/') ? url : `/${url}`}`;
+    targetUrl = `${ENV_URL}${cleanPath}`;
+  } else {
+    targetUrl = url.startsWith('/api') ? url : `/api${url.startsWith('/') ? url : `/${url}`}`;
+  }
+
   const response = await fetch(targetUrl, {
     ...options,
     headers
@@ -34,4 +44,3 @@ export async function fetchApi<T>(url: string, options: RequestInit = {}): Promi
 }
 
 export const apiRequest = fetchApi;
-
